@@ -251,7 +251,8 @@ function TimeSpent_Ach() "{{{
 		let l:line = l:line +1
 	endwhile
 
-	echo 'NOTE: ' . l:time / 60.0 . ' hour(s).'
+	echo 'NOTE: ' . string(l:time / 60.0) .
+	\ ' hour(s).'
 
 endfunction "}}}
 
