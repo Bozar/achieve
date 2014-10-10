@@ -48,7 +48,7 @@ function s:AnotherDay() "{{{
 	let l:cursor_current = getpos('.')
 
 	" check fold head
-	call CursorAtFoldBegin()
+	call CursorAtFoldBegin_FdM()
 	execute 'normal [z'
 	if substitute(getline('.'),
 	\s:Today,'','') == getline('.')
