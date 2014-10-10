@@ -2,17 +2,17 @@
 
 " variables "{{{2
 
-let s:Today_Ach = '^\d\{1,2} 月 \d\{1,2} 日'
-let s:Today_Ach .= ' {\{3}\d$'
+let s:Today = '^\d\{1,2} 月 \d\{1,2} 日'
+let s:Today .= ' {\{3}\d$'
 
-let s:Buffer_Ach = '^缓冲区 {\{3}\d$'
+let s:Buffer = '^缓冲区 {\{3}\d$'
 
-let s:Count_Ach = '\(第 \)\(\d\{1,2}\)\( 次，\)'
-let s:Time_Ach = '\(共 \)\(\d\{2,3}\)\( 分钟\)'
+let s:Count = '\(第 \)\(\d\{1,2}\)\( 次，\)'
+let s:Time = '\(共 \)\(\d\{2,3}\)\( 分钟\)'
 
-let s:Progress_Ach = s:Count_Ach
-let s:Progress_Ach .= s:Time_Ach
-let s:Progress_Ach .= '$'
+let s:Progress = s:Count
+let s:Progress .= s:Time
+let s:Progress .= '$'
 
  "}}}2
 " functions "{{{2
@@ -21,7 +21,7 @@ let s:Progress_Ach .= '$'
 
 " undone (*) and done (~)
 
-function Finished_Ach() "{{{
+function s:Finished() "{{{
 
 	if substitute(getline('.'),
 	\'^\t\*','','') != getline('.')
@@ -33,17 +33,17 @@ function Finished_Ach() "{{{
 
 endfunction "}}}
 
-function F1_Ach() "{{{
+function s:F1() "{{{
 
 	nnoremap <buffer> <silent> <f1>
-	\ :call Finished_Ach()<cr>
+	\ :call <sid>Finished()<cr>
 
 endfunction "}}}
 
  "}}}3
 " <f2> "{{{3
 
-function AnotherDay_Ach() "{{{
+function s:AnotherDay() "{{{
 
 	let l:cursor_current = getpos('.')
 
@@ -51,8 +51,8 @@ function AnotherDay_Ach() "{{{
 	call CursorAtFoldBegin()
 	execute 'normal [z'
 	if substitute(getline('.'),
-	\s:Today_Ach,'','') == getline('.')
-		echo "ERROR: '" . s:Today_Ach .
+	\s:Today,'','') == getline('.')
+		echo "ERROR: '" . s:Today .
 		\ "' not found!"
 		call setpos('.', l:cursor_current)
 		return
@@ -92,17 +92,17 @@ function AnotherDay_Ach() "{{{
 
 endfunction "}}}
 
-function F2_Ach() "{{{
+function s:F2() "{{{
 
 	nnoremap <buffer> <silent> <f2>
-	\ :call AnotherDay_Ach()<cr>
+	\ :call <sid>AnotherDay()<cr>
 
 endfunction "}}}
 
  "}}}3
 " <f3> "{{{3
 
-function MoveTask_Ach() "{{{
+function s:MoveTask() "{{{
 
 	let l:cursor_top = [bufnr('%'),line('w0'),
 	\1,'off']
@@ -121,7 +121,7 @@ function MoveTask_Ach() "{{{
 	" move today's first task into buffer
 	" set new marker 'a'
 	if substitute(getline(line('.')-2),
-	\s:Today_Ach,'','')!=getline(line('.')-2)
+	\s:Today,'','')!=getline(line('.')-2)
 		+1
 		execute 'normal wma'
 		-1
@@ -132,16 +132,16 @@ function MoveTask_Ach() "{{{
 	execute 'normal [z'
 	" from today into buffer
 	if substitute(getline('.'),
-	\s:Today_Ach,'','') != getline('.')
+	\s:Today,'','') != getline('.')
 		'h-1delete
-		call search(s:Buffer_Ach)
+		call search(s:Buffer)
 		+1put
 		s/^\(\t\)\~/\1*/e
 	" from buffer into today
 	elseif substitute(getline('.'),
-	\s:Buffer_Ach,'','') != getline('.')
+	\s:Buffer,'','') != getline('.')
 		'h-1delete
-		call search(s:Today_Ach)
+		call search(s:Today)
 		execute 'normal ]z'
 		-2put
 		s/^\(\t\)\~/\1*/e
@@ -154,31 +154,31 @@ function MoveTask_Ach() "{{{
 
 endfunction "}}}
 
-function F3_Ach() "{{{
+function s:F3() "{{{
 
 	nnoremap <buffer> <silent> <f3>
-	\ :call MoveTask_Ach()<cr>
+	\ :call <sid>MoveTask()<cr>
 
 endfunction "}}}
 
  "}}}3
 " <f4> "{{{3
 
-function ProgressBar_Ach() "{{{
+function s:ProgressBar() "{{{
 
 	if substitute(getline("'<"),
-	\s:Progress_Ach,'','') == getline("'<")
+	\s:Progress,'','') == getline("'<")
 		return
 	elseif substitute(getline("'>"),
-	\s:Progress_Ach,'','') == getline("'>")
+	\s:Progress,'','') == getline("'>")
 		return
 	else
 		'<mark j
 		'>mark k
 		let l:begin = substitute(getline("'<"),
-		\'^.*' . s:Progress_Ach,'\2','')
+		\'^.*' . s:Progress,'\2','')
 		execute "'j,'ks/" .
-		\ s:Progress_Ach . "//"
+		\ s:Progress . "//"
 		let l:i = l:begin | 'j,'kg/$/s/$/\=l:i/ |
 		\ let l:i = l:i + 1
 		'j,'ks/$/#/
@@ -191,21 +191,21 @@ function ProgressBar_Ach() "{{{
 
 endfunction "}}}
 
-function F4_Ach() "{{{
+function s:F4() "{{{
 
 	nnoremap <buffer> <silent> <f4>
 	\ :s/$/，第 1 次，共 30 分钟/<cr>
 	inoremap <buffer> <silent> <f4>
 	\ ，第 1 次，共 30 分钟<esc>
 	vnoremap <buffer> <silent> <f4>
-	\ <esc>:call ProgressBar_Ach()<cr>
+	\ <esc>:call <sid>ProgressBar()<cr>
 
 endfunction "}}}
 
  "}}}3
 " time spent in total "{{{3
 
-function TimeSpent_Ach() "{{{
+function s:TimeSpent() "{{{
 
 	let l:register = @"
 	call search(l:register)
@@ -216,7 +216,7 @@ function TimeSpent_Ach() "{{{
 	endif
 
 	execute 'g!/' . l:register . '/delete'
-	if substitute(getline('.'),s:Progress_Ach,
+	if substitute(getline('.'),s:Progress,
 	\'','') == getline('.')
 		undo
 		echo 'ERROR: Incorrect @"!'
@@ -225,7 +225,7 @@ function TimeSpent_Ach() "{{{
 
 	sort
 	let l:highest = substitute(getline('$'),
-	\'^\(.*\)' . s:Count_Ach . '\(.*\)$',
+	\'^\(.*\)' . s:Count . '\(.*\)$',
 	\'\3','')
 	undo
 	execute 'g!/' . l:register . '/delete'
@@ -246,7 +246,7 @@ function TimeSpent_Ach() "{{{
 	while l:line < line('$')
 		let l:time = l:time +
 		\ substitute(getline(l:line),
-		\'^\(.*\)' . s:Time_Ach . '$',
+		\'^\(.*\)' . s:Time . '$',
 		\'\3','')
 		let l:line = l:line +1
 	endwhile
@@ -257,13 +257,13 @@ function TimeSpent_Ach() "{{{
 endfunction "}}}
 
  "}}}3
-" main function "{{{3
+" key map all-in-one "{{{3
 
-function KeyMap_Main_Ach() "{{{
+function s:KeyMap() "{{{
 
 	let l:i = 1
 	while l:i < 5
-		execute 'call F' . l:i . '_Ach()'
+		execute 'call <sid>F' . l:i . '()'
 		let l:i = l:i + 1
 	endwhile
 
@@ -273,11 +273,11 @@ endfunction "}}}
  "}}}2
 " commands "{{{2
 
-command KeAchieve call KeyMap_Main_Ach()
-command AchTimeSpent call TimeSpent_Ach()
+command KeAchieve call <sid>KeyMap()
+command AchTimeSpent call <sid>TimeSpent()
 
 autocmd BufRead achieve.note
-\ call KeyMap_Main_Ach()
+\ call <sid>KeyMap()
 
  "}}}2
  "}}}1
