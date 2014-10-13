@@ -69,7 +69,7 @@ function s:AnotherDay() "{{{
 	" the second day in a month
 	" in which case both }2 will be changed
 	'l-1
-	call search('}\{3}2$','c')
+	call search('}\{3}2$','cW')
 	mark l
 	'h,'l-1yank
 	'h-2mark z
@@ -137,14 +137,14 @@ function s:MoveTask() "{{{
 	if substitute(getline('.'),
 	\s:Today,'','') != getline('.')
 		'h-1delete
-		call search(s:Buffer)
+		call search(s:Buffer,'bw')
 		+1put
 		s/^\(\t\)\~/\1*/e
 	" from buffer into today
 	elseif substitute(getline('.'),
 	\s:Buffer,'','') != getline('.')
 		'h-1delete
-		call search(s:Today)
+		call search(s:Today,'w')
 		execute 'normal ]z'
 		-2put
 		s/^\(\t\)\~/\1*/e
@@ -211,9 +211,7 @@ endfunction "}}}
 function s:TimeSpent() "{{{
 
 	let l:register = @"
-	call search(l:register)
-	if substitute(getline('.'),l:register,
-	\'','') == getline('.')
+	if search(l:register,'cnw') == 0
 		echo 'ERROR: Nothing matched for @"!'
 		return
 	endif
