@@ -1,5 +1,7 @@
 " daily achievement "{{{1
 
+" Last Update: Oct 13, Mon | 20:42:24 | 2014
+
 " variables "{{{2
 
 let s:Today = '^\d\{1,2} 月 \d\{1,2} 日'
