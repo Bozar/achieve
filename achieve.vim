@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Oct 13, Mon | 20:42:24 | 2014
+" Last Update: Oct 18, Sat | 14:32:43 | 2014
 
 " variables "{{{2
 
@@ -279,8 +279,7 @@ endfunction "}}}
 command KeAchieve call <sid>KeyMap()
 command AchTimeSpent call <sid>TimeSpent()
 
-autocmd BufRead achieve.note
-\ call <sid>KeyMap()
+autocmd BufRead achieve.daily call <sid>KeyMap()
 
  "}}}2
  "}}}1
