@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Oct 18, Sat | 14:32:43 | 2014
+" Last Update: Oct 26, Sun | 12:28:35 | 2014
 
 " variables "{{{2
 
@@ -9,8 +9,8 @@ let s:Today .= ' {\{3}\d$'
 
 let s:Buffer = '^缓冲区 {\{3}\d$'
 
-let s:Count = '\(第 \)\(\d\{1,2}\)\( 次，\)'
-let s:Time = '\(共 \)\(\d\{2,3}\)\( 分钟\)'
+let s:Count = '\(\d\{1,2}\)\(\.\)'
+let s:Time = '\(\d\{2,3}\)'
 
 let s:Progress = s:Count
 let s:Progress .= s:Time
@@ -181,17 +181,16 @@ function s:ProgressBar() "{{{
 		'<mark j
 		'>mark k
 		let l:begin = substitute(getline("'<"),
-		\'^.*' . s:Progress,'\2','')
+		\'^.*' . s:Progress,'\1','')
 		execute "'j,'ks/" .
 		\ s:Progress . "//"
 		let l:i = l:begin | 'j,'kg/$/s/$/\=l:i/ |
 		\ let l:i = l:i + 1
 		'j,'ks/$/#/
-		let l:i = l:begin |
-		\ 'j,'kg/$/s/$/\=l:i*30/ |
-		\ let l:i = l:i + 1
-		'j,'ks/\(\d\{1,2}\)#\(\d\{2,3}\)$/
-		\第 \1 次，共 \2 分钟/
+		let l:j = l:begin |
+		\ 'j,'kg/$/s/$/\=l:j*30/ |
+		\ let l:j = l:j + 1
+		'j,'ks/#/./
 	endif
 
 endfunction "}}}
@@ -199,9 +198,9 @@ endfunction "}}}
 function s:F4() "{{{
 
 	nnoremap <buffer> <silent> <f4>
-	\ :s/$/，第 1 次，共 30 分钟/<cr>
+	\ :s/$/，1.30/<cr>
 	inoremap <buffer> <silent> <f4>
-	\ ，第 1 次，共 30 分钟<esc>
+	\ ，1.30<esc>
 	vnoremap <buffer> <silent> <f4>
 	\ <esc>:call <sid>ProgressBar()<cr>
 
@@ -226,19 +225,21 @@ function s:TimeSpent() "{{{
 		return
 	endif
 
+	execute '%s/^\(.*，\)' . s:Progress .
+	\ '/\2\1\2\3\4/'
 	sort
 	let l:highest = substitute(getline('$'),
 	\'^\(.*\)' . s:Count . '\(.*\)$',
-	\'\3','')
+	\'\2','')
 	undo
 	execute 'g!/' . l:register . '/delete'
 
 	let l:count = 2
 	while l:count < l:highest + 1
 		let l:smaller = l:count - 1
-		execute 'g/第 ' . l:count .
-		\ ' 次/-1s/第 ' . l:smaller .
-		\ ' 次/###MARK###/'
+		execute 'g/，' . l:count .
+		\ '\./-1s/，' . l:smaller .
+		\ '\./###MARK###/'
 		let l:count = l:count + 1
 	endwhile
 	g/###MARK###/delete
@@ -249,9 +250,9 @@ function s:TimeSpent() "{{{
 	while l:line < line('$')
 		let l:time = l:time +
 		\ substitute(getline(l:line),
-		\'^\(.*\)' . s:Time . '$',
-		\'\3','')
-		let l:line = l:line +1
+		\'^\(.*\.\)' . s:Time . '$',
+		\'\2','')
+		let l:line = l:line + 1
 	endwhile
 
 	echo 'NOTE: ' . string(l:time / 60.0) .
