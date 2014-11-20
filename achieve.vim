@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Oct 26, Sun | 12:28:35 | 2014
+" Last Update: Nov 20, Thu | 16:00:56 | 2014
 
 " variables "{{{2
 
@@ -16,6 +16,13 @@ let s:Progress = s:Count
 let s:Progress .= s:Time
 let s:Progress .= '$'
 
+let s:Bullet_Pre = '    \*'
+let s:Bullet_Post = '    \~'
+let s:Bullet_OR = '\(' . s:Bullet_Pre . '\)\|\('
+let s:Bullet_OR .=  s:Bullet_Post . '\)'
+
+let s:Mark = '###LONG_PLACEHOLDER_FOR_ACHIEVE_###'
+
  "}}}2
 " functions "{{{2
 
@@ -23,262 +30,338 @@ let s:Progress .= '$'
 
 " undone (*) and done (~)
 
-function s:Finished() "{{{
+function s:Finished() "{{{4
 
-	if substitute(getline('.'),
-	\'^\t\*','','') != getline('.')
-		s/^\t\*/\t\~/
-	elseif substitute(getline('.'),
-	\'^\t\~','','') != getline('.')
-		s/^\t\~/\t\*/
-	endif
+    if substitute(getline('.'),
+    \ s:Bullet_Pre,'','') != getline('.')
 
-endfunction "}}}
+        execute 's/^' . s:Bullet_Pre . '/' .
+        \ s:Bullet_Post . '/'
 
-function s:F1() "{{{
+    elseif substitute(getline('.'),
+    \ s:Bullet_Post,'','') != getline('.')
 
-	nnoremap <buffer> <silent> <f1>
-	\ :call <sid>Finished()<cr>
+        execute 's/^' . s:Bullet_Post . '/' .
+        \ s:Bullet_Pre . '/'
 
-endfunction "}}}
+    endif
+
+endfunction "}}}4
+
+function s:F1() "{{{4
+
+    nnoremap <buffer> <silent> <f1>
+    \ :call <sid>Finished()<cr>
+
+endfunction "}}}4
 
  "}}}3
 " <f2> "{{{3
 
-function s:AnotherDay() "{{{
+function s:AnotherDay() "{{{4
 
-	let l:cursor_current = getpos('.')
+    let l:cursor = getpos('.')
 
-	" check fold head
-	if substitute(getline('.'),
-		\'{\{3}\d\{0,2}$','','') != getline('.')
-		+1
-	endif
-	execute 'normal [z'
-	if substitute(getline('.'),
-	\s:Today,'','') == getline('.')
-		echo "ERROR: '" . s:Today .
-		\ "' not found!"
-		call setpos('.', l:cursor_current)
-		return
-	else
-		call setpos('.', l:cursor_current)
-	endif
+    " check fold head
 
-	" insert new lines for another day
-	call MoveFoldMarker(2)
-	" fix substitution errors on rare occasions:
-	" the second day in a month
-	" in which case both }2 will be changed
-	'l-1
-	call search('}\{3}2$','cW')
-	mark l
-	'h,'l-1yank
-	'h-2mark z
-	'zput
+    if substitute(getline('.'),
+    \'{\{3}\d\{0,2}$','','') != getline('.')
 
-	" change date and foldlevel
-	'z+1s/\d\{1,2}\( 日\)\@=/\=submatch(0)+1/
-	call MappingMarker(1)
-	call ChangeFoldLevel(2)
-	'zdelete
-	execute 'normal mh]zml'
+        +1
 
-	" substitute 'page 2-5' with 'page 6-'
-	" substitute done (~) with undone (*)
-	'h,'ls/\(\d\+-\)\@<=
-		\\(\d\+\)/
-		\\=submatch(0)+1/e
-	'h,'ls/\d\+-\(\d\+\)/\1-/e
-	'h,'ls/\t\~/\t\*/e
+    endif
 
-	'h+2
-	execute 'normal wma'
+    execute 'normal [z'
 
-endfunction "}}}
+    if substitute(getline('.'),
+    \s:Today,'','') == getline('.')
 
-function s:F2() "{{{
+        echo 'ERROR:' . " '" . s:Today . "'" .
+        \ ' not found!'
 
-	nnoremap <buffer> <silent> <f2>
-	\ :call <sid>AnotherDay()<cr>
+        call setpos('.', l:cursor)
+        return
 
-endfunction "}}}
+    else
+
+        call setpos('.', l:cursor)
+
+    endif
+
+    " insert new lines for another day
+
+    call MoveFoldMarker(2)
+
+    " fix substitution errors on rare occasions:
+    " the second day in a month
+    " in which case both }2 will be changed
+
+    'l-1
+    call search('}\{3}2$','cW')
+    mark l
+
+    'h,'l-1yank
+    'h-2mark z
+    'zput
+
+    " change date and foldlevel
+
+    'z+1s/\d\{1,2}\( 日\)\@=/\=submatch(0)+1/
+
+    call MappingMarker(1)
+    call ChangeFoldLevel(2)
+
+    'zdelete
+    execute 'normal mh]zml'
+
+    " substitute 'page 2-5' with 'page 6-'
+
+    'h,'ls/\(\d\+-\)\@<=\(\d\+\)/\=submatch(0)+1/e
+    'h,'ls/\d\+-\(\d\+\)/\1-/e
+
+    " substitute done (~) with undone (*)
+
+    'h,'ls/^\(    \)\@<=\~/\*/e
+
+    'h+2
+    execute 'normal wma'
+
+endfunction "}}}4
+
+function s:F2() "{{{4
+
+    nnoremap <buffer> <silent> <f2>
+    \ :call <sid>AnotherDay()<cr>
+
+endfunction "}}}4
 
  "}}}3
 " <f3> "{{{3
 
-function s:MoveTask() "{{{
+function s:MoveTask() "{{{4
 
-	let l:cursor_top = [bufnr('%'),line('w0'),
-	\1,'off']
-	set nofoldenable
+    let l:cursor =
+    \ [bufnr('%'),line('w0'),1,0]
 
-	if substitute(getline('.'),
-	\'^\t\(\~\|\*\)','','') == getline('.')
-		set foldenable
-		call setpos(l:cursor_top)
-		execute 'normal zt'
-		''
-		echo 'ERROR: Task line not found!'
-		return
-	endif
+    set nofoldenable
 
-	" move today's first task into buffer
-	" set new marker 'a'
-	if substitute(getline(line('.')-2),
-	\s:Today,'','')!=getline(line('.')-2)
-		+1
-		execute 'normal wma'
-		-1
-	endif
+    if substitute(getline('.'),
+    \ '^' . s:Bullet_OR,'','') == getline('.')
 
-	" move tasks between buffer and today
-	+1mark h
-	execute 'normal [z'
-	" from today into buffer
-	if substitute(getline('.'),
-	\s:Today,'','') != getline('.')
-		'h-1delete
-		call search(s:Buffer,'bw')
-		+1put
-		s/^\(\t\)\~/\1*/e
-	" from buffer into today
-	elseif substitute(getline('.'),
-	\s:Buffer,'','') != getline('.')
-		'h-1delete
-		call search(s:Today,'w')
-		execute 'normal ]z'
-		-2put
-		s/^\(\t\)\~/\1*/e
-	endif
+        set foldenable
+        call setpos(l:cursor)
+        execute 'normal zt'
+        ''
+        echo 'ERROR: Task line not found!'
+        return
 
-	set foldenable
-	call setpos('.', l:cursor_top)
-	execute 'normal zt'
-	'h
+    endif
 
-endfunction "}}}
+    " move today's first task into buffer
+    " set new marker 'a'
 
-function s:F3() "{{{
+    if substitute(getline(line('.')-2),
+    \s:Today,'','') != getline(line('.')-2)
 
-	nnoremap <buffer> <silent> <f3>
-	\ :call <sid>MoveTask()<cr>
+        +1
+        execute 'normal wma'
+        -1
 
-endfunction "}}}
+    endif
+
+    " move tasks between buffer and today
+
+    +1mark h
+    execute 'normal [z'
+
+    " from today into buffer
+
+    if substitute(getline('.'),
+    \s:Today,'','') != getline('.')
+
+        'h-1delete
+        call search(s:Buffer,'bW')
+        +1put
+
+    " from buffer into today
+
+    elseif substitute(getline('.'),
+    \ s:Buffer,'','') != getline('.')
+
+        'h-1delete
+        call search(s:Today,'W')
+        execute 'normal ]z'
+        -2put
+
+    endif
+
+    execute 's/^' . s:Bullet_Post . '/' .
+    \ s:Bullet_Pre . '/e'
+
+    set foldenable
+    call setpos('.', l:cursor)
+    execute 'normal zt'
+    'h
+
+endfunction "}}}4
+
+function s:F3() "{{{4
+
+    nnoremap <buffer> <silent> <f3>
+    \ :call <sid>MoveTask()<cr>
+
+endfunction "}}}4
 
  "}}}3
 " <f4> "{{{3
 
-function s:ProgressBar() "{{{
+function s:ProgressBar() "{{{4
 
-	if substitute(getline("'<"),
-	\s:Progress,'','') == getline("'<")
-		return
-	elseif substitute(getline("'>"),
-	\s:Progress,'','') == getline("'>")
-		return
-	else
-		'<mark j
-		'>mark k
-		let l:begin = substitute(getline("'<"),
-		\'^.*' . s:Progress,'\1','')
-		execute "'j,'ks/" .
-		\ s:Progress . "//"
-		let l:i = l:begin | 'j,'kg/$/s/$/\=l:i/ |
-		\ let l:i = l:i + 1
-		'j,'ks/$/#/
-		let l:j = l:begin |
-		\ 'j,'kg/$/s/$/\=l:j*30/ |
-		\ let l:j = l:j + 1
-		'j,'ks/#/./
-	endif
+    if substitute(getline("'<"),
+    \ s:Progress,'','') == getline("'<")
 
-endfunction "}}}
+        return
 
-function s:F4() "{{{
+    elseif substitute(getline("'>"),
+    \s:Progress,'','') == getline("'>")
 
-	nnoremap <buffer> <silent> <f4>
-	\ :s/$/，1.30/<cr>
-	inoremap <buffer> <silent> <f4>
-	\ ，1.30<esc>
-	vnoremap <buffer> <silent> <f4>
-	\ <esc>:call <sid>ProgressBar()<cr>
+        return
 
-endfunction "}}}
+    else
+
+        '<mark j
+        '>mark k
+
+        let l:begin = substitute(getline("'j"),
+        \'^.*' . s:Progress,'\1','')
+
+        execute "'j,'ks/" . s:Progress . '//'
+
+        let l:i = l:begin |
+        \ 'j,'kg/$/s//\=l:i/ |
+        \ let l:i = l:i + 1
+
+        'j,'ks/$/#/
+
+        let l:j = l:begin |
+        \ 'j,'kg/$/s//\=l:j*30/ |
+        \ let l:j = l:j + 1
+
+        'j,'ks/#/./
+
+    endif
+
+endfunction "}}}4
+
+function s:F4() "{{{4
+
+    nnoremap <buffer> <silent> <f4>
+    \ :s/$/，1.30/<cr>
+
+    inoremap <buffer> <silent> <f4>
+    \ ，1.30<esc>
+
+    vnoremap <buffer> <silent> <f4>
+    \ <esc>:call <sid>ProgressBar()<cr>
+
+endfunction "}}}4
 
  "}}}3
 " time spent in total "{{{3
 
-function s:TimeSpent() "{{{
+function s:TimeSpent() "{{{4
 
-	let l:register = @"
-	if search(l:register,'cnw') == 0
-		echo 'ERROR: Nothing matched for @"!'
-		return
-	endif
+    let l:register = @"
 
-	execute 'g!/' . l:register . '/delete'
-	if substitute(getline('.'),s:Progress,
-	\'','') == getline('.')
-		undo
-		echo 'ERROR: Incorrect @"!'
-		return
-	endif
+    if search(l:register,'cnw') == 0
 
-	execute '%s/^\(.*，\)' . s:Progress .
-	\ '/\2\1\2\3\4/'
-	sort
-	let l:highest = substitute(getline('$'),
-	\'^\(.*\)' . s:Count . '\(.*\)$',
-	\'\2','')
-	undo
-	execute 'g!/' . l:register . '/delete'
+        echo 'ERROR: Nothing matched for @"!'
+        return
 
-	let l:count = 2
-	while l:count < l:highest + 1
-		let l:smaller = l:count - 1
-		execute 'g/，' . l:count .
-		\ '\./-1s/，' . l:smaller .
-		\ '\./###MARK###/'
-		let l:count = l:count + 1
-	endwhile
-	g/###MARK###/delete
+    endif
 
-	let l:time = 0
-	let l:line = 1
-	$s/$/\r
-	while l:line < line('$')
-		let l:time = l:time +
-		\ substitute(getline(l:line),
-		\'^\(.*\.\)' . s:Time . '$',
-		\'\2','')
-		let l:line = l:line + 1
-	endwhile
+    execute 'g!/' . l:register . '/delete'
 
-	echo 'NOTE: ' . string(l:time / 60.0) .
-	\ ' hour(s).'
+    if substitute(getline('.'),s:Progress,'','')
+    \ == getline('.')
 
-endfunction "}}}
+        undo
+        echo 'ERROR: Incorrect @"!'
+        return
+
+    endif
+
+    execute '%s/^\(.*，\)' . s:Progress .
+    \ '/\2\1\2\3\4/'
+
+    sort
+
+    let l:highest = substitute(getline('$'),
+    \ '^\(.*\)' . s:Count . '\(.*\)$',
+    \ '\2','')
+
+    undo
+
+    execute 'g!/' . l:register . '/delete'
+
+    let l:count = 2
+
+    while l:count < l:highest + 1
+
+        let l:smaller = l:count - 1
+
+        execute 'g/，' . l:count . '\./' .
+        \ '-1s/，' . l:smaller . '\./' . s:Mark .
+        \ '/'
+
+        let l:count = l:count + 1
+
+    endwhile
+
+    execute 'g/' . s:Mark . '/delete'
+
+    let l:time = 0
+    let l:line = 1
+
+    $s/$/\r
+
+    while l:line < line('$')
+
+        let l:time = l:time +
+        \ substitute(getline(l:line),
+        \'^\(.*\.\)' . s:Time . '$','\2','')
+
+        let l:line = l:line + 1
+
+    endwhile
+
+    echo 'NOTE: ' . string(l:time / 60.0) .
+    \ ' hour(s).'
+
+endfunction "}}}4
 
  "}}}3
 " key map all-in-one "{{{3
 
-function s:KeyMap() "{{{
+function s:KeyMap() "{{{4
 
-	let l:i = 1
-	while l:i < 5
-		execute 'call <sid>F' . l:i . '()'
-		let l:i = l:i + 1
-	endwhile
+    let l:i = 1
 
-endfunction "}}}
+    while l:i < 5
+
+        execute 'call <sid>F' . l:i . '()'
+        let l:i = l:i + 1
+
+    endwhile
+
+endfunction "}}}4
 
  "}}}3
  "}}}2
 " commands "{{{2
 
-command KeAchieve call <sid>KeyMap()
-command AchTimeSpent call <sid>TimeSpent()
+command Ach0TimeSpent call <sid>TimeSpent()
+command Ach1Keymap call <sid>KeyMap()
 
 autocmd BufRead achieve.daily call <sid>KeyMap()
 
