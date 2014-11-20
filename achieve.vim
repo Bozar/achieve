@@ -1,7 +1,13 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 20, Thu | 16:00:56 | 2014
+" Last Update: Nov 20, Thu | 22:30:07 | 2014
 
+"TODO "{{{2
+
+" decouple key-mappings with functions
+" define buffer local commands and key-mappings
+
+ "}}}2
 " variables "{{{2
 
 let s:Today = '^\d\{1,2} 月 \d\{1,2} 日'
@@ -121,7 +127,8 @@ function s:AnotherDay() "{{{4
 
     " substitute done (~) with undone (*)
 
-    'h,'ls/^\(    \)\@<=\~/\*/e
+    execute "'h,'ls/^" . s:Bullet_Post . '/' .
+    \ s:Bullet_Pre . '/e'
 
     'h+2
     execute 'normal wma'
@@ -353,6 +360,10 @@ function s:KeyMap() "{{{4
         let l:i = l:i + 1
 
     endwhile
+
+"command -buffer AchDone call <sid>Finished()
+"exe 'nno <buffer> ' . g:Key . ' :AchDone<cr>'
+"com! -buffer -range NewMark <line1>,<line2>s;^;###;
 
 endfunction "}}}4
 
