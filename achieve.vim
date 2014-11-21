@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 21, Fri | 22:01:21 | 2014
+" Last Update: Nov 21, Fri | 23:08:59 | 2014
 
 " load & cpoptions "{{{2
 
@@ -85,53 +85,15 @@ if !exists('g:KeyTask_Achieve')
 
 endif
 
+if !exists('g:AutoLoad_Achieve')
+
+    let g:AutoLoad_Achieve = ''
+
+endif
+
  "}}}3
  "}}}2
 " functions "{{{2
-
-function s:LoadVars() "{{{3
-
-    if g:KeyDone_Achieve != ''
-
-        let s:KeyDone = g:KeyDone_Achieve
-
-    else
-
-        let s:KeyDone = '<enter>'
-
-    endif
-
-    if g:KeyDay_Achieve != ''
-
-        let s:KeyDay = g:KeyDay_Achieve
-
-    else
-
-        let s:KeyDay = '<c-tab>'
-
-    endif
-
-    if g:KeyMove_Achieve != ''
-
-        let s:KeyMove = g:KeyMove_Achieve
-
-    else
-
-        let s:KeyMove = '<tab>'
-
-    endif
-
-    if g:KeyTask_Achieve != ''
-
-        let s:KeyTask = g:KeyTask_Achieve
-
-    else
-
-        let s:KeyTask = '<c-enter>'
-
-    endif
-
-endfunction "}}}3
 
 function s:Done() range "{{{3
 
@@ -360,6 +322,50 @@ function s:TaskBar() range "{{{3
 
 endfunction "}}}3
 
+function s:LoadScriptVars() "{{{3
+
+    if g:KeyDone_Achieve != ''
+
+        let s:KeyDone = g:KeyDone_Achieve
+
+    else
+
+        let s:KeyDone = '<enter>'
+
+    endif
+
+    if g:KeyDay_Achieve != ''
+
+        let s:KeyDay = g:KeyDay_Achieve
+
+    else
+
+        let s:KeyDay = '<c-tab>'
+
+    endif
+
+    if g:KeyMove_Achieve != ''
+
+        let s:KeyMove = g:KeyMove_Achieve
+
+    else
+
+        let s:KeyMove = '<tab>'
+
+    endif
+
+    if g:KeyTask_Achieve != ''
+
+        let s:KeyTask = g:KeyTask_Achieve
+
+    else
+
+        let s:KeyTask = '<c-enter>'
+
+    endif
+
+endfunction "}}}3
+
 function s:KeyMapModule(key,fun,mode) "{{{3
 
     " normal mode
@@ -386,7 +392,7 @@ endfunction "}}}3
 
 function s:KeyMapValue() "{{{3
 
-    call <sid>LoadVars()
+    call <sid>LoadScriptVars()
 
     call <sid>KeyMapModule(
     \ s:KeyDone,'Done','nv')
@@ -402,13 +408,24 @@ function s:KeyMapValue() "{{{3
 
 endfunction "}}}3
 
+function s:AutoCommand() "{{{3
+
+    if g:AutoLoad_Achieve == ''
+
+        return
+
+    endif
+
+    execute 'autocmd BufRead,BufNewFile' .
+    \ ' ' . g:AutoLoad_Achieve .
+    \ ' call <sid>KeyMapValue()'
+
+endfunction "}}}3
+
  "}}}2
 " commands "{{{2
 
-command AchKeymap call <sid>KeyMapValue()
-
-autocmd BufRead achieve.daily
-\ call <sid>KeyMapValue()
+autocmd VimEnter * call <sid>AutoCommand()
 
  "}}}2
 " cpotions "{{{2
