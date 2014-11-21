@@ -1,17 +1,35 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 20, Thu | 22:30:07 | 2014
+" Last Update: Nov 21, Fri | 19:56:37 | 2014
 
-"TODO "{{{2
+" load & cpoptions "{{{2
 
-" decouple key-mappings with functions
-" define buffer local commands and key-mappings
+if !exists('g:Loaded_Achieve')
+
+    let g:Loaded_Achieve = 0
+
+endif
+
+if g:Loaded_Achieve > 0
+
+    finish
+
+endif
+
+let g:Loaded_Achieve = 1
+
+let s:Save_cpo = &cpoptions
+set cpoptions&vim
 
  "}}}2
 " variables "{{{2
 
-let s:Today = '^\d\{1,2} 月 \d\{1,2} 日'
-let s:Today .= ' {\{3}\d$'
+" script {{{3
+
+let s:Date = '^\d\{1,2} 月 \d\{1,2} 日'
+let s:Date .= ' {\{3}\d$'
+
+let s:Today = '\d\{1,2}\( 日\)'
 
 let s:Buffer = '^缓冲区 {\{3}\d$'
 
@@ -20,77 +38,145 @@ let s:Time = '\(\d\{2,3}\)'
 
 let s:Progress = s:Count
 let s:Progress .= s:Time
-let s:Progress .= '$'
 
-let s:Bullet_Pre = '    \*'
-let s:Bullet_Post = '    \~'
-let s:Bullet_OR = '\(' . s:Bullet_Pre . '\)\|\('
-let s:Bullet_OR .=  s:Bullet_Post . '\)'
+let s:notProgress = '\(' . s:Progress . '\)\@<!$'
+
+let s:Seperator = '，'
+let s:Initial = s:Seperator . '1.30'
+
+let s:BulletBefore = '    \*'
+let s:BulletAfter = '    \~'
+
+let s:BulletOR = '\(' . s:BulletBefore . '\)\|'
+let s:BulletOR .= '\(' . s:BulletAfter . '\)'
+
+let s:TaskFoldLevel = 2
 
 let s:Mark = '###LONG_PLACEHOLDER_FOR_ACHIEVE_###'
 
+let s:firstToLast = 'a:firstline .'
+let s:firstToLast .= " ',' ."
+let s:firstToLast .= ' a:lastline'
+
+ "}}}3
+" global "{{{3
+
+if !exists('g:KeyDone_Achieve')
+
+    let g:KeyDone_Achieve = ''
+
+endif
+
+if !exists('g:KeyDay_Achieve')
+
+    let g:KeyDay_Achieve = ''
+
+endif
+
+if !exists('g:KeyMove_Achieve')
+
+    let g:KeyMove_Achieve = ''
+
+endif
+
+if !exists('g:KeyTask_Achieve')
+
+    let g:KeyTask_Achieve = ''
+
+endif
+
+ "}}}3
  "}}}2
 " functions "{{{2
 
-" <f1> "{{{3
+function s:LoadVars() "{{{3
 
-" undone (*) and done (~)
+    if g:KeyDone_Achieve != ''
 
-function s:Finished() "{{{4
+        let s:KeyDone = g:KeyDone_Achieve
 
-    if substitute(getline('.'),
-    \ s:Bullet_Pre,'','') != getline('.')
+    else
 
-        execute 's/^' . s:Bullet_Pre . '/' .
-        \ s:Bullet_Post . '/'
-
-    elseif substitute(getline('.'),
-    \ s:Bullet_Post,'','') != getline('.')
-
-        execute 's/^' . s:Bullet_Post . '/' .
-        \ s:Bullet_Pre . '/'
+        let s:KeyDone = '<enter>'
 
     endif
 
-endfunction "}}}4
+    if g:KeyDay_Achieve != ''
 
-function s:F1() "{{{4
+        let s:KeyDay = g:KeyDay_Achieve
 
-    nnoremap <buffer> <silent> <f1>
-    \ :call <sid>Finished()<cr>
+    else
 
-endfunction "}}}4
+        let s:KeyDay = '<c-tab>'
 
- "}}}3
-" <f2> "{{{3
+    endif
 
-function s:AnotherDay() "{{{4
+    if g:KeyMove_Achieve != ''
+
+        let s:KeyMove = g:KeyMove_Achieve
+
+    else
+
+        let s:KeyMove = '<tab>'
+
+    endif
+
+    if g:KeyTask_Achieve != ''
+
+        let s:KeyTask = g:KeyTask_Achieve
+
+    else
+
+        let s:KeyTask = '<c-enter>'
+
+    endif
+
+endfunction "}}}3
+
+function s:Done() range "{{{3
+
+    if substitute(getline('.'),
+    \ s:BulletBefore,'','') != getline('.')
+
+        " undone (*) > done (~)
+
+        execute eval(s:firstToLast) .
+        \ 's/^' . s:BulletBefore . '/' .
+        \ s:BulletAfter . '/'
+
+    elseif substitute(getline('.'),
+    \ s:BulletAfter,'','') != getline('.')
+
+        " done (~) > undone (*)
+
+        execute eval(s:firstToLast) .
+        \ 's/^' . s:BulletAfter . '/' .
+        \ s:BulletBefore . '/'
+
+    endif
+
+endfunction "}}}3
+
+function s:AnotherDay() "{{{3
 
     let l:cursor = getpos('.')
 
     " check fold head
 
-    if substitute(getline('.'),
-    \'{\{3}\d\{0,2}$','','') != getline('.')
-
-        +1
-
-    endif
-
-    execute 'normal [z'
+    call moveCursor#GotoFoldBegin()
 
     if substitute(getline('.'),
-    \s:Today,'','') == getline('.')
+    \ s:Date,'','') == getline('.')
 
-        echo 'ERROR:' . " '" . s:Today . "'" .
+        echo 'ERROR:' . " '" . s:Date . "'" .
         \ ' not found!'
 
-        call setpos('.', l:cursor)
+        call setpos('.',l:cursor)
         return
 
     else
 
-        call setpos('.', l:cursor)
+        call setpos('.',l:cursor)
 
     endif
 
@@ -103,7 +189,8 @@ function s:AnotherDay() "{{{4
     " in which case both }2 will be changed
 
     'l-1
-    call search('}\{3}2$','cW')
+    call search('}\{3}' . s:TaskFoldLevel . '$',
+    \ 'cW')
     mark l
 
     'h,'l-1yank
@@ -112,7 +199,8 @@ function s:AnotherDay() "{{{4
 
     " change date and foldlevel
 
-    'z+1s/\d\{1,2}\( 日\)\@=/\=submatch(0)+1/
+    execute "'z+1s/" . s:Today  . '\@=/' .
+    \ '\=submatch(0)+1/'
 
     call MappingMarker(1)
     call ChangeFoldLevel(2)
@@ -127,67 +215,64 @@ function s:AnotherDay() "{{{4
 
     " substitute done (~) with undone (*)
 
-    execute "'h,'ls/^" . s:Bullet_Post . '/' .
-    \ s:Bullet_Pre . '/e'
+    execute "'h,'ls/^" . s:BulletAfter . '/' .
+    \ s:BulletBefore . '/e'
 
     'h+2
     execute 'normal wma'
 
-endfunction "}}}4
+endfunction "}}}3
 
-function s:F2() "{{{4
+function s:MoveTask() range "{{{3
 
-    nnoremap <buffer> <silent> <f2>
-    \ :call <sid>AnotherDay()<cr>
+    let l:cursor = getpos('.')
 
-endfunction "}}}4
+    call moveCursor#GotoColumn1('w0','str')
+    let l:top = getpos('.')
 
- "}}}3
-" <f3> "{{{3
+    if substitute(getline(a:firstline),
+    \ '^' . s:BulletOR,'','') ==
+    \ getline(a:firstline)
 
-function s:MoveTask() "{{{4
-
-    let l:cursor =
-    \ [bufnr('%'),line('w0'),1,0]
-
-    set nofoldenable
-
-    if substitute(getline('.'),
-    \ '^' . s:Bullet_OR,'','') == getline('.')
-
-        set foldenable
-        call setpos(l:cursor)
-        execute 'normal zt'
-        ''
+        call setpos('.',l:cursor)
         echo 'ERROR: Task line not found!'
         return
 
     endif
 
-    " move today's first task into buffer
-    " set new marker 'a'
+    " set new marker 'a' before moving today's
+    " first task into buffer
 
-    if substitute(getline(line('.')-2),
-    \s:Today,'','') != getline(line('.')-2)
+    if substitute(getline(a:firstline - 2),
+    \ s:Date,'','') != getline(a:firstline - 2)
 
-        +1
+        execute a:lastline . ' + 1'
         execute 'normal wma'
-        -1
 
     endif
 
     " move tasks between buffer and today
 
-    +1mark h
-    execute 'normal [z'
+    " re-set task bullet
+
+    execute eval(s:firstToLast) .
+    \ 's/^' . s:BulletAfter . '/' .
+    \ s:BulletBefore . '/e'
+
+    let l:fold = &foldenable
+
+    execute a:firstline
+    call moveCursor#GotoFoldBegin()
 
     " from today into buffer
 
     if substitute(getline('.'),
-    \s:Today,'','') != getline('.')
+    \ s:Date,'','') != getline('.')
 
-        'h-1delete
+        execute eval(s:firstToLast) . 'delete'
+
         call search(s:Buffer,'bW')
+        set nofoldenable
         +1put
 
     " from buffer into today
@@ -195,186 +280,141 @@ function s:MoveTask() "{{{4
     elseif substitute(getline('.'),
     \ s:Buffer,'','') != getline('.')
 
-        'h-1delete
-        call search(s:Today,'W')
-        execute 'normal ]z'
+        execute eval(s:firstToLast) . 'delete'
+
+        call search(s:Date,'W')
+        execute 'normal zjzk'
+        set nofoldenable
         -2put
 
     endif
 
-    execute 's/^' . s:Bullet_Post . '/' .
-    \ s:Bullet_Pre . '/e'
+    let &foldenable = l:fold
 
-    set foldenable
-    call setpos('.', l:cursor)
+    call setpos('.',l:top)
     execute 'normal zt'
-    'h
 
-endfunction "}}}4
+    execute a:lastline . ' + 1'
+    execute 'normal w'
 
-function s:F3() "{{{4
+endfunction "}}}3
 
-    nnoremap <buffer> <silent> <f3>
-    \ :call <sid>MoveTask()<cr>
+function s:TaskBar() range "{{{3
 
-endfunction "}}}4
+    " add new task progress bar
 
- "}}}3
-" <f4> "{{{3
+    if a:firstline == a:lastline
 
-function s:ProgressBar() "{{{4
-
-    if substitute(getline("'<"),
-    \ s:Progress,'','') == getline("'<")
-
-        return
-
-    elseif substitute(getline("'>"),
-    \s:Progress,'','') == getline("'>")
-
-        return
-
-    else
-
-        '<mark j
-        '>mark k
-
-        let l:begin = substitute(getline("'j"),
-        \'^.*' . s:Progress,'\1','')
-
-        execute "'j,'ks/" . s:Progress . '//'
-
-        let l:i = l:begin |
-        \ 'j,'kg/$/s//\=l:i/ |
-        \ let l:i = l:i + 1
-
-        'j,'ks/$/#/
-
-        let l:j = l:begin |
-        \ 'j,'kg/$/s//\=l:j*30/ |
-        \ let l:j = l:j + 1
-
-        'j,'ks/#/./
-
-    endif
-
-endfunction "}}}4
-
-function s:F4() "{{{4
-
-    nnoremap <buffer> <silent> <f4>
-    \ :s/$/，1.30/<cr>
-
-    inoremap <buffer> <silent> <f4>
-    \ ，1.30<esc>
-
-    vnoremap <buffer> <silent> <f4>
-    \ <esc>:call <sid>ProgressBar()<cr>
-
-endfunction "}}}4
-
- "}}}3
-" time spent in total "{{{3
-
-function s:TimeSpent() "{{{4
-
-    let l:register = @"
-
-    if search(l:register,'cnw') == 0
-
-        echo 'ERROR: Nothing matched for @"!'
-        return
-
-    endif
-
-    execute 'g!/' . l:register . '/delete'
-
-    if substitute(getline('.'),s:Progress,'','')
-    \ == getline('.')
-
-        undo
-        echo 'ERROR: Incorrect @"!'
-        return
-
-    endif
-
-    execute '%s/^\(.*，\)' . s:Progress .
-    \ '/\2\1\2\3\4/'
-
-    sort
-
-    let l:highest = substitute(getline('$'),
-    \ '^\(.*\)' . s:Count . '\(.*\)$',
-    \ '\2','')
-
-    undo
-
-    execute 'g!/' . l:register . '/delete'
-
-    let l:count = 2
-
-    while l:count < l:highest + 1
-
-        let l:smaller = l:count - 1
-
-        execute 'g/，' . l:count . '\./' .
-        \ '-1s/，' . l:smaller . '\./' . s:Mark .
+        execute a:firstline . 's/$/' . s:Initial .
         \ '/'
 
-        let l:count = l:count + 1
+    endif
 
-    endwhile
+    " update task progress bar
 
-    execute 'g/' . s:Mark . '/delete'
+    if a:firstline != a:lastline
 
-    let l:time = 0
-    let l:line = 1
+        execute a:firstline
+        call moveCursor#GotoColumn1('.','str')
 
-    $s/$/\r
+        let l:error = 'ERROR: At least one task'
+        let l:error .= ' contains no progression!'
 
-    while l:line < line('$')
+        if search(s:notProgress,'c',a:lastline)
 
-        let l:time = l:time +
-        \ substitute(getline(l:line),
-        \'^\(.*\.\)' . s:Time . '$','\2','')
+            echo l:error
+            return
 
-        let l:line = l:line + 1
+        endif
 
-    endwhile
+        " get first count
 
-    echo 'NOTE: ' . string(l:time / 60.0) .
-    \ ' hour(s).'
+        let l:begin = substitute(
+        \ getline(a:firstline),
+        \ '^.\{-}' . s:Progress . '$','\1','')
 
-endfunction "}}}4
+        " delete old progress bar
 
- "}}}3
-" key map all-in-one "{{{3
+        execute eval(s:firstToLast) .
+        \ 's/' . s:Progress . '$//'
 
-function s:KeyMap() "{{{4
+        let l:i = l:begin
+        let l:j = l:begin * 30
 
-    let l:i = 1
+        execute a:firstline
 
-    while l:i < 5
+        while line('.') < a:lastline + 1
+            
+            let l:str = l:i . '.' . l:j
 
-        execute 'call <sid>F' . l:i . '()'
-        let l:i = l:i + 1
+            s/$/\=l:str/
 
-    endwhile
+            let l:i = l:i + 1
+            let l:j = l:j + 30
 
-"command -buffer AchDone call <sid>Finished()
-"exe 'nno <buffer> ' . g:Key . ' :AchDone<cr>'
-"com! -buffer -range NewMark <line1>,<line2>s;^;###;
+            +1
 
-endfunction "}}}4
+        endwhile
 
- "}}}3
+    endif
+
+endfunction "}}}3
+
+function s:KeyMapModule(key,fun,mode) "{{{3
+
+    " normal mode
+
+    if substitute(a:mode,'n','','') != a:mode
+
+        execute 'nnoremap <buffer> <silent>' .
+        \ ' ' . a:key .
+        \ ' :call <sid>' . a:fun . '()<cr>'
+
+    endif
+
+    " visual mode
+
+    if substitute(a:mode,'v','','') != a:mode
+
+        execute 'vnoremap <buffer> <silent>' .
+        \ ' ' . a:key .
+        \ ' :call <sid>' . a:fun . '()<cr>'
+
+    endif
+
+endfunction "}}}3
+
+function s:KeyMapValue() "{{{3
+
+    call <sid>LoadVars()
+
+    call <sid>KeyMapModule(
+    \ s:KeyDone,'Done','nv')
+
+    call <sid>KeyMapModule(
+    \ s:KeyDay,'AnotherDay','n')
+
+    call <sid>KeyMapModule(
+    \ s:KeyMove,'MoveTask','nv')
+
+    call <sid>KeyMapModule(
+    \ s:KeyTask,'TaskBar','nv')
+
+endfunction "}}}3
+
  "}}}2
 " commands "{{{2
 
-command Ach0TimeSpent call <sid>TimeSpent()
-command Ach1Keymap call <sid>KeyMap()
+command AchKeymap call <sid>KeyMapValue()
 
-autocmd BufRead achieve.daily call <sid>KeyMap()
+autocmd BufRead achieve.daily
+\ call <sid>KeyMapValue()
 
  "}}}2
- "}}}1
+" cpotions "{{{2
+
+let &cpoptions = s:Save_cpo
+unlet s:Save_cpo
+
+ "}}}2
+ "}}}
