@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 21, Fri | 19:56:37 | 2014
+" Last Update: Nov 21, Fri | 22:01:21 | 2014
 
 " load & cpoptions "{{{2
 
@@ -294,7 +294,7 @@ function s:MoveTask() range "{{{3
     call setpos('.',l:top)
     execute 'normal zt'
 
-    execute a:lastline . ' + 1'
+    execute a:lastline
     execute 'normal w'
 
 endfunction "}}}3
@@ -417,4 +417,4 @@ let &cpoptions = s:Save_cpo
 unlet s:Save_cpo
 
  "}}}2
- "}}}
+ "}}}1
