@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 21, Fri | 23:08:59 | 2014
+" Last Update: Nov 22, Sat | 09:16:02 | 2014
 
 " load & cpoptions "{{{2
 
@@ -302,19 +302,20 @@ function s:TaskBar() range "{{{3
 
         let l:i = l:begin
         let l:j = l:begin * 30
+        let l:lnum = a:firstline
 
-        execute a:firstline
+        execute l:lnum
 
-        while line('.') < a:lastline + 1
+        while l:lnum <= a:lastline
             
             let l:str = l:i . '.' . l:j
 
-            s/$/\=l:str/
+            execute l:lnum . 's/$/\=l:str/'
 
             let l:i = l:i + 1
             let l:j = l:j + 30
 
-            +1
+            let l:lnum = l:lnum +1
 
         endwhile
 
