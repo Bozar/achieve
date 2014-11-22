@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 22, Sat | 09:16:02 | 2014
+" Last Update: Nov 23, Sun | 07:43:57 | 2014
 
 " load & cpoptions "{{{2
 
