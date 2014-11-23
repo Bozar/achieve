@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 23, Sun | 07:43:57 | 2014
+" Last Update: Nov 23, Sun | 13:09:54 | 2014
 
 " load & cpoptions "{{{2
 
@@ -24,7 +24,7 @@ set cpoptions&vim
  "}}}2
 " variables "{{{2
 
-" script {{{3
+" script "{{{3
 
 let s:Date = '^\d\{1,2} 月 \d\{1,2} 日'
 let s:Date .= ' {\{3}\d$'
@@ -33,16 +33,18 @@ let s:Today = '\d\{1,2}\( 日\)'
 
 let s:Buffer = '^缓冲区 {\{3}\d$'
 
+let s:Seperator = '，'
+
+let s:Initial = s:Seperator . '1.30'
+
 let s:Count = '\(\d\{1,2}\)\(\.\)'
 let s:Time = '\(\d\{2,3}\)'
 
 let s:Progress = s:Count
 let s:Progress .= s:Time
 
-let s:notProgress = '\(' . s:Progress . '\)\@<!$'
-
-let s:Seperator = '，'
-let s:Initial = s:Seperator . '1.30'
+let s:notProgress = '\(' . s:Seperator
+let s:notProgress .= s:Progress . '\)\@<!$'
 
 let s:BulletBefore = '    \*'
 let s:BulletAfter = '    \~'
@@ -53,6 +55,9 @@ let s:BulletOR .= '\(' . s:BulletAfter . '\)'
 let s:TaskFoldLevel = 2
 
 let s:Mark = '###LONG_PLACEHOLDER_FOR_ACHIEVE_###'
+
+let s:errorPro = 'ERROR: Line' . ' '
+let s:errorGress = ' contains no progression!'
 
 let s:firstToLast = 'a:firstline .'
 let s:firstToLast .= " ',' ."
@@ -279,12 +284,13 @@ function s:TaskBar() range "{{{3
         execute a:firstline
         call moveCursor#GotoColumn1('.','str')
 
-        let l:error = 'ERROR: At least one task'
-        let l:error .= ' contains no progression!'
-
         if search(s:notProgress,'c',a:lastline)
 
+            let l:error = s:errorPro . line('.')
+            let l:error .= s:errorGress
+
             echo l:error
+
             return
 
         endif
@@ -323,7 +329,127 @@ function s:TaskBar() range "{{{3
 
 endfunction "}}}3
 
-function s:LoadScriptVars() "{{{3
+function s:TimeSpent() "{{{3
+
+    " check register pattern
+
+    if @" == '' || search(@",'w') == 0
+
+        echo 'ERROR: @" not found!'
+
+        return
+
+    endif
+
+    " check task progress bar
+
+    let l:register = @"
+
+    let l:taskCheck = l:register . '.*'
+    let l:taskCheck .= s:notProgress
+
+    if search(l:taskCheck,'w')
+
+        let l:error = s:errorPro . line('.')
+        let l:error .= s:errorGress
+
+        echo l:error
+
+        return
+
+    endif
+
+    " delete everything EXCEPT s:Count
+
+    execute 'g!/' . l:register . '/delete'
+
+    execute '%s/^.*' . s:Seperator . s:Count .
+    \ s:Time . '$/\1/'
+
+    " check broken progression, such as: 1, 2, 4
+
+    let l:lineNr = 1
+
+    while l:lineNr <= line('$') - 1
+
+        execute l:lineNr
+
+        let l:i = getline('.')
+        let l:j = getline(line('.') + 1)
+
+        if l:j != l:i + 1 && l:j != 1
+
+            let l:search = l:register . '.*' .
+            \ l:i . '.' . l:i * 30
+
+            let @/ = l:search
+
+            let l:remind = 'Type n to search'
+            let l:remind .= " '" . l:search . "'"
+
+            undo
+
+            echo 'ERROR: Progression broken!'
+            echo l:remind
+
+            return
+
+        endif
+
+        let l:lineNr = l:lineNr + 1
+
+    endwhile
+
+    " find max count, then delete smaller counts
+    " in a group, such as:
+    " [1], [2], 3; [1], [2], [3], 4
+
+    let l:max = max(getline(1,'$'))
+    let l:keep = 2
+
+    while l:keep <= l:max
+
+        let l:delete = l:keep - 1
+
+        execute 'g/^' . l:keep . '$/-1s/' .
+        \ '^' . l:delete . '$/' . s:Mark . '/'
+
+        let l:keep = l:keep + 1
+
+    endwhile
+
+    if search(s:Mark,'w')
+
+        execute 'g/' . s:Mark . '/delete'
+
+    endif
+
+    " sum up and calculate time
+
+    let l:lineNr = 1
+    let l:sum = 0
+
+    while l:lineNr <= line('$')
+
+        execute l:lineNr
+
+        let l:sum = l:sum + getline('.')
+
+        let l:lineNr = l:lineNr + 1
+
+    endwhile
+
+    let l:spent = l:sum / 2.0
+
+    let l:time = 'Time spent:'
+    let l:time .= ' ' . string(l:spent)
+    let l:time .= ' hour(s).'
+
+    echo l:time
+
+endfunction "}}}3
+
+function s:KeyMapScriptVar() "{{{3
 
     if g:KeyDone_Achieve != ''
 
@@ -393,7 +519,7 @@ endfunction "}}}3
 
 function s:KeyMapValue() "{{{3
 
-    call <sid>LoadScriptVars()
+    call <sid>KeyMapScriptVar()
 
     call <sid>KeyMapModule(
     \ s:KeyDone,'Done','nv')
@@ -427,6 +553,12 @@ endfunction "}}}3
 " commands "{{{2
 
 autocmd VimEnter * call <sid>AutoCommand()
+
+if !exists(':AchTimeSpent')
+
+    command AchTimeSpent call <sid>TimeSpent()
+
+endif
 
  "}}}2
 " cpotions "{{{2
