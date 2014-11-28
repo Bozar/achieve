@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Nov 23, Sun | 13:09:54 | 2014
+" Last Update: Nov 28, Fri | 19:09:50 | 2014
 
 " load & cpoptions "{{{2
 
@@ -194,7 +194,7 @@ function s:MoveTask() range "{{{3
 
     let l:cursor = getpos('.')
 
-    call moveCursor#GotoColumn1('w0','str')
+    call moveCursor#GotoColumn1('w0')
     let l:top = getpos('.')
 
     if substitute(getline(a:firstline),
@@ -282,7 +282,7 @@ function s:TaskBar() range "{{{3
     if a:firstline != a:lastline
 
         execute a:firstline
-        call moveCursor#GotoColumn1('.','str')
+        call moveCursor#GotoColumn1('.')
 
         if search(s:notProgress,'c',a:lastline)
 
