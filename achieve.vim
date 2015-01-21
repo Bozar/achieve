@@ -1,6 +1,6 @@
 " daily achievement "{{{1
 
-" Last Update: Jan 20, Tue | 17:37:39 | 2015
+" Last Update: Jan 20, Tue | 19:19:28 | 2015
 
 " load & cpoptions "{{{2
 
@@ -543,8 +543,8 @@ function s:AutoCommand() "{{{3
 
     endif
 
-    execute 'autocmd' .
-    \ ' BufRead,BufEnter,BufNewFile' .
+    "execute 'autocmd BufRead,BufNewFile' .
+    execute 'autocmd BufEnter,BufNewFile' .
     \ ' ' . g:AutoLoad_Achieve .
     \ ' call <sid>KeyMapValue()'
 
