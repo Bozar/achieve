@@ -1,27 +1,6 @@
 " daily achievement "{{{1
+" Last Update: Apr 03, Fri | 15:37:41 | 2015
 
-" Last Update: Jan 20, Tue | 19:19:28 | 2015
-
-" load & cpoptions "{{{2
-
-if !exists('g:Loaded_Achieve')
-
-    let g:Loaded_Achieve = 0
-
-endif
-
-if g:Loaded_Achieve > 0
-
-    finish
-
-endif
-
-let g:Loaded_Achieve = 1
-
-let s:Save_cpo = &cpoptions
-set cpoptions&vim
-
- "}}}2
 " variables "{{{2
 
 " script "{{{3
@@ -63,7 +42,7 @@ let s:firstToLast = 'a:firstline .'
 let s:firstToLast .= " ',' ."
 let s:firstToLast .= ' a:lastline'
 
- "}}}3
+"}}}3
 " global "{{{3
 
 if !exists('g:KeyDone_Achieve')
@@ -96,8 +75,8 @@ if !exists('g:AutoLoad_Achieve')
 
 endif
 
- "}}}3
- "}}}2
+"}}}3
+"}}}2
 " functions "{{{2
 
 function s:Done() range "{{{3
@@ -127,66 +106,51 @@ endfunction "}}}3
 function s:AnotherDay() "{{{3
 
     let l:cursor = getpos('.')
-
-    " check fold head
-
     call moveCursor#GotoFoldBegin()
-
     if substitute(getline('.'),
-    \ s:Date,'','') == getline('.')
-
+    \ s:Date,'','') ==# getline('.')
         echo 'ERROR:' . " '" . s:Date . "'" .
         \ ' not found!'
-
         call setpos('.',l:cursor)
         return
-
     else
-
         call setpos('.',l:cursor)
-
     endif
 
-    " insert new lines for another day
+    let l:line = line('w0')
+    let &foldlevel = 20
 
-    call MoveFoldMarker(2)
+    " change old fold level
+    normal! [zV]zy]zp]z
+    if getline(line('.')-1) =~# '\v\}{3}2$'
+        normal! k
+    endif
+    s/2$/3/
+    normal! [z
+    s/2$/3/
+    normal! k[z
 
-    " fix substitution errors on rare occasions:
-    " the second day in a month
-    " in which case both }2 will be changed
-
-    'l-1
-    call search('}\{3}' . s:TaskFoldLevel . '$',
-    \ 'cW')
-    mark l
-
-    'h,'l-1yank
-    'h-2mark z
-    'zput
-
-    " change date and foldlevel
-
-    execute "'z+1s/" . s:Today  . '\@=/' .
+    " change new date
+    execute "s/" . s:Today  . '\@=/' .
     \ '\=submatch(0)+1/'
 
-    call MappingMarker(1)
-    call ChangeFoldLevel(2)
-
-    'zdelete
-    execute 'normal mh]zml'
-
     " substitute 'page 2-5' with 'page 6-'
-
-    'h,'ls/\(\d\+-\)\@<=\(\d\+\)/\=submatch(0)+1/e
-    'h,'ls/\d\+-\(\d\+\)/\1-/e
+    mark j
+    normal! ]z
+    mark k
+    'j,'ks/\(\d\+-\)\@<=\(\d\+\)/\=submatch(0)+1/e
+    'j,'ks/\d\+-\(\d\+\)/\1-/e
 
     " substitute done (~) with undone (*)
-
-    execute "'h,'ls/^" . s:BulletAfter . '/' .
+    execute "'j,'ks/^" . s:BulletAfter . '/' .
     \ s:BulletBefore . '/e'
 
-    'h+2
+    'j+2
     execute 'normal wma'
+    let &foldlevel = 2
+    execute l:line
+    normal! zt
+    'a
 
 endfunction "}}}3
 
@@ -194,7 +158,8 @@ function s:MoveTask() range "{{{3
 
     let l:cursor = getpos('.')
 
-    call moveCursor#GotoColumn1('w0')
+    execute line('w0')
+    execute 'normal! 0'
     let l:top = getpos('.')
 
     if substitute(getline(a:firstline),
@@ -282,7 +247,7 @@ function s:TaskBar() range "{{{3
     if a:firstline != a:lastline
 
         execute a:firstline
-        call moveCursor#GotoColumn1('.')
+        execute 'normal! 0'
 
         if search(s:notProgress,'c',a:lastline)
 
@@ -550,7 +515,7 @@ function s:AutoCommand() "{{{3
 
 endfunction "}}}3
 
- "}}}2
+"}}}2
 " commands "{{{2
 
 autocmd VimEnter * call <sid>AutoCommand()
@@ -561,11 +526,5 @@ if !exists(':AchTimeSpent')
 
 endif
 
- "}}}2
-" cpotions "{{{2
-
-let &cpoptions = s:Save_cpo
-unlet s:Save_cpo
-
- "}}}2
- "}}}1
+"}}}2
+"}}}1
