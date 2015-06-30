@@ -1,9 +1,9 @@
-" daily achievement "{{{1
-" Last Update: Apr 03, Fri | 15:37:41 | 2015
+" daily achievement
+" Last Update: Jun 30, Tue | 22:48:14 | 2015
 
-" variables "{{{2
+" variables
 
-" script "{{{3
+" script
 
 let s:Date = '^\d\{1,2} 月 \d\{1,2} 日'
 let s:Date .= ' {\{3}\d$'
@@ -42,50 +42,35 @@ let s:firstToLast = 'a:firstline .'
 let s:firstToLast .= " ',' ."
 let s:firstToLast .= ' a:lastline'
 
-"}}}3
-" global "{{{3
+" global
 
 if !exists('g:KeyDone_Achieve')
-
     let g:KeyDone_Achieve = ''
-
 endif
 
 if !exists('g:KeyDay_Achieve')
-
     let g:KeyDay_Achieve = ''
-
 endif
 
 if !exists('g:KeyMove_Achieve')
-
     let g:KeyMove_Achieve = ''
-
 endif
 
 if !exists('g:KeyTask_Achieve')
-
     let g:KeyTask_Achieve = ''
-
 endif
 
 if !exists('g:AutoLoad_Achieve')
-
     let g:AutoLoad_Achieve = ''
-
 endif
 
-"}}}3
-"}}}2
-" functions "{{{2
+" functions
 
-function s:Done() range "{{{3
-
+function s:Done() range
     if substitute(getline('.'),
     \ s:BulletBefore,'','') != getline('.')
 
         " undone (*) > done (~)
-
         execute eval(s:firstToLast) .
         \ 's/^' . s:BulletBefore . '/' .
         \ s:BulletAfter . '/'
@@ -94,17 +79,14 @@ function s:Done() range "{{{3
     \ s:BulletAfter,'','') != getline('.')
 
         " done (~) > undone (*)
-
         execute eval(s:firstToLast) .
         \ 's/^' . s:BulletAfter . '/' .
         \ s:BulletBefore . '/'
 
     endif
+endfunction
 
-endfunction "}}}3
-
-function s:AnotherDay() "{{{3
-
+function s:AnotherDay()
     let l:cursor = getpos('.')
     call moveCursor#GotoFoldBegin()
     if substitute(getline('.'),
@@ -151,11 +133,9 @@ function s:AnotherDay() "{{{3
     execute l:line
     normal! zt
     'a
+endfunction
 
-endfunction "}}}3
-
-function s:MoveTask() range "{{{3
-
+function s:MoveTask() range
     let l:cursor = getpos('.')
 
     execute line('w0')
@@ -165,11 +145,9 @@ function s:MoveTask() range "{{{3
     if substitute(getline(a:firstline),
     \ '^' . s:BulletOR,'','') ==
     \ getline(a:firstline)
-
         call setpos('.',l:cursor)
         echo 'ERROR: Task line not found!'
         return
-
     endif
 
     " set new marker 'a' before moving today's
@@ -180,13 +158,11 @@ function s:MoveTask() range "{{{3
 
         execute a:lastline . ' + 1'
         execute 'normal wma'
-
     endif
 
     " move tasks between buffer and today
 
     " re-set task bullet
-
     execute eval(s:firstToLast) .
     \ 's/^' . s:BulletAfter . '/' .
     \ s:BulletBefore . '/e'
@@ -197,7 +173,6 @@ function s:MoveTask() range "{{{3
     call moveCursor#GotoFoldBegin()
 
     " from today into buffer
-
     if substitute(getline('.'),
     \ s:Date,'','') != getline('.')
 
@@ -208,17 +183,13 @@ function s:MoveTask() range "{{{3
         +1put
 
     " from buffer into today
-
     elseif substitute(getline('.'),
     \ s:Buffer,'','') != getline('.')
-
         execute eval(s:firstToLast) . 'delete'
-
         call search(s:Date,'W')
         execute 'normal zjzk'
         set nofoldenable
         -2put
-
     endif
 
     let &foldenable = l:fold
@@ -228,36 +199,28 @@ function s:MoveTask() range "{{{3
 
     execute a:lastline
     execute 'normal w'
+endfunction
 
-endfunction "}}}3
-
-function s:TaskBar() range "{{{3
-
+function s:TaskBar() range
     " add new task progress bar
-
     if a:firstline == a:lastline
-
         execute a:firstline . 's/$/' . s:Initial .
         \ '/'
-
     endif
 
     " update task progress bar
 
     if a:firstline != a:lastline
-
         execute a:firstline
         execute 'normal! 0'
 
         if search(s:notProgress,'c',a:lastline)
-
             let l:error = s:errorPro . line('.')
             let l:error .= s:errorGress
 
             echo l:error
 
             return
-
         endif
 
         " get first count
@@ -278,7 +241,7 @@ function s:TaskBar() range "{{{3
         execute l:lnum
 
         while l:lnum <= a:lastline
-            
+
             let l:str = l:i . '.' . l:j
 
             execute l:lnum . 's/$/\=l:str/'
@@ -289,21 +252,16 @@ function s:TaskBar() range "{{{3
             let l:lnum = l:lnum +1
 
         endwhile
-
     endif
+endfunction
 
-endfunction "}}}3
-
-function s:TimeSpent() "{{{3
-
+function s:TimeSpent()
     " check register pattern
 
     if @" == '' || search(@",'w') == 0
-
         echo 'ERROR: @" not found!'
 
         return
-
     endif
 
     " check task progress bar
@@ -314,14 +272,12 @@ function s:TimeSpent() "{{{3
     let l:taskCheck .= s:notProgress
 
     if search(l:taskCheck,'w')
-
         let l:error = s:errorPro . line('.')
         let l:error .= s:errorGress
 
         echo l:error
 
         return
-
     endif
 
     " delete everything EXCEPT s:Count
@@ -343,7 +299,6 @@ function s:TimeSpent() "{{{3
         let l:j = getline(line('.') + 1)
 
         if l:j != l:i + 1 && l:j != 1
-
             let l:search = l:register . '.*' .
             \ l:i . '.' . l:i * 30
 
@@ -358,7 +313,6 @@ function s:TimeSpent() "{{{3
             echo l:remind
 
             return
-
         endif
 
         let l:lineNr = l:lineNr + 1
@@ -384,9 +338,7 @@ function s:TimeSpent() "{{{3
     endwhile
 
     if search(s:Mark,'w')
-
         execute 'g/' . s:Mark . '/delete'
-
     endif
 
     " sum up and calculate time
@@ -411,79 +363,53 @@ function s:TimeSpent() "{{{3
     let l:time .= ' hour(s).'
 
     echo l:time
+endfunction
 
-endfunction "}}}3
-
-function s:KeyMapScriptVar() "{{{3
-
+function s:KeyMapScriptVar()
     if g:KeyDone_Achieve != ''
-
         let s:KeyDone = g:KeyDone_Achieve
-
     else
-
         let s:KeyDone = '<enter>'
-
     endif
 
     if g:KeyDay_Achieve != ''
-
         let s:KeyDay = g:KeyDay_Achieve
-
     else
-
         let s:KeyDay = '<c-tab>'
-
     endif
 
     if g:KeyMove_Achieve != ''
-
         let s:KeyMove = g:KeyMove_Achieve
-
     else
-
         let s:KeyMove = '<tab>'
-
     endif
 
     if g:KeyTask_Achieve != ''
-
         let s:KeyTask = g:KeyTask_Achieve
-
     else
-
         let s:KeyTask = '<c-enter>'
-
     endif
+endfunction
 
-endfunction "}}}3
-
-function s:KeyMapModule(key,fun,mode) "{{{3
-
+function s:KeyMapModule(key,fun,mode)
     " normal mode
 
     if substitute(a:mode,'n','','') != a:mode
-
         execute 'nnoremap <buffer> <silent>' .
         \ ' ' . a:key .
         \ ' :call <sid>' . a:fun . '()<cr>'
-
     endif
 
     " visual mode
 
     if substitute(a:mode,'v','','') != a:mode
-
         execute 'vnoremap <buffer> <silent>' .
         \ ' ' . a:key .
         \ ' :call <sid>' . a:fun . '()<cr>'
-
     endif
+endfunction
 
-endfunction "}}}3
-
-function s:KeyMapValue() "{{{3
-
+function s:KeyMapValue()
     call <sid>KeyMapScriptVar()
 
     call <sid>KeyMapModule(
@@ -498,33 +424,26 @@ function s:KeyMapValue() "{{{3
     call <sid>KeyMapModule(
     \ s:KeyTask,'TaskBar','nv')
 
-endfunction "}}}3
+    set foldlevel=2
+endfunction
 
-function s:AutoCommand() "{{{3
-
+function s:AutoCommand()
     if g:AutoLoad_Achieve == ''
-
         return
-
     endif
 
     "execute 'autocmd BufRead,BufNewFile' .
     execute 'autocmd BufEnter,BufNewFile' .
     \ ' ' . g:AutoLoad_Achieve .
     \ ' call <sid>KeyMapValue()'
+endfunction
 
-endfunction "}}}3
-
-"}}}2
-" commands "{{{2
+" commands
 
 autocmd VimEnter * call <sid>AutoCommand()
 
 if !exists(':AchTimeSpent')
-
     command AchTimeSpent call <sid>TimeSpent()
-
 endif
 
-"}}}2
-"}}}1
+" vim: set fdm=indent :
