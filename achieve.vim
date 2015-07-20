@@ -1,5 +1,5 @@
 " daily achievement
-" Last Update: Jun 30, Tue | 22:48:14 | 2015
+" Last Update: Jul 20, Mon | 14:14:19 | 2015
 
 " variables
 
@@ -375,7 +375,8 @@ function s:KeyMapScriptVar()
     if g:KeyDay_Achieve != ''
         let s:KeyDay = g:KeyDay_Achieve
     else
-        let s:KeyDay = '<c-tab>'
+        let s:KeyDay = '<s-tab>'
+        "let s:KeyDay = '<c-tab>'
     endif
 
     if g:KeyMove_Achieve != ''
